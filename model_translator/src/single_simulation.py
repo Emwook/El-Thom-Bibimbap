@@ -43,7 +43,7 @@ def run_single_simulation(i, rocket, environment, flight):
             for sample in current_flight.solution:
                 file.write(rp_solution_arr_str(sample) + '\n')
     # |
-    accel_data = []
+    accel_data = [None]*450000
 
     for sensor_tuple in rocket.sensors:
         sensor = sensor_tuple.component

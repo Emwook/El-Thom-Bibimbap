@@ -1,5 +1,6 @@
 {
-  "BMA150_barometer": {
+  "BMA150_barometer": { 
+"name": "dawd"
     "sampling_rate": 83.0,
     "measurement_range": [110000.0, 30000.0],
     "resolution": 0.18,

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
+from rocketpy.sensors import barometer
 import tqdm
 from enum import IntEnum
 from rocketpy import Environment, SolidMotor, Rocket, Flight , Barometer , Accelerometer, Gyroscope
@@ -166,6 +167,45 @@ def init_gyroscope_from_JSON(path_to_file, name):
         orientation=gyro_data["orientation"]
     )
     return gyroscope
+
+def init_gnss_from_JSON(path_to_file, name):
+    with open(path_to_file, 'r', encoding='utf-8')as file:
+        data= json.load(file)
+    accel_data = data[name]
+    accelerometer = Accelerometer(
+        name=accel_data["name"],
+        sampling_rate=accel_data["sampling_rate"],
+        measurement_range=accel_data["measurement_range"],
+        resolution=accel_data["resolution"],
+        noise_density=accel_data["noise_density"],
+        noise_variance=accel_data["noise_variance"],
+        random_walk_density=accel_data["random_walk_density"],
+        random_walk_variance=accel_data["random_walk_variance"],
+        constant_bias=accel_data["constant_bias"],
+        operating_temperature=accel_data["operating_temperature"],
+        temperature_bias=accel_data["temperature_bias"],
+        orientation=accel_data["orientation"]
+    )
+    return accelerometer
+
+def init_barometer_from_JSON(path_to_file, name):
+    with open(path_to_file, 'r', encoding='utf-8')as file:
+        data= json.load(file)
+    baro_data= data[name]
+    barometer = Barometer(
+        name=baro_data["name"],
+        sampling_rate=baro_data["sampling_rate"],
+        measurement_range=baro_data["measurement_range"],
+        resolution=baro_data["resolution"],
+        noise_density=baro_data["noise_density"],
+        noise_variance=baro_data["noise_variance"],
+        random_walk_density=baro_data["random_walk_density"],
+        random_walk_variance=baro_data["random_walk_variance"],
+        constant_bias=baro_data["constant_bias"],
+        operating_temperature=baro_data["operating_temperature"],
+        temperature_bias=baro_data["temperature_bias"]
+    )
+    return barometer 
 
 def add_gyro_to_rocket(rocket , gyro_list):
     gyro_list.sort(key= lambda x: x.measurement_range)
