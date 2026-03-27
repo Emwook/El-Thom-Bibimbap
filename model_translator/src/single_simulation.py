@@ -189,8 +189,8 @@ def run_single_simulation(i, rocket, environment_data, heading , rail_length):
                     "name": sensor.name
                 })
     if accel_data:
-        accel_data_no_nans = accel_data[~np.isnan(a).any(axis=1), :]
         all_accels_df = pd.concat([item["df"] for item in accel_data_no_nans], axis=1)
+        all_accels_df.dropna(inplace=True)
         times_array = all_accels_df.index.values
         
         real_acc_x = np.array([current_flight.ax(t) for t in times_array])
