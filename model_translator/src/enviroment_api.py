@@ -1,5 +1,6 @@
 import cdsapi
 import rocketpy 
+import scipy
 import xarray as xr
 import numpy as np
 import pandas as pd
@@ -12,7 +13,9 @@ from logger import *
 
 # date must be datetime type
 # PROVIDED PATH SHOULD NOT CONTAINT FILE NAME ONLY DIRECTORY
-def get_enviroment_from_date(environment_data, date,filename, path="../../source_model/ERA5_weather/single/"):
+def get_enviroment_from_date(environment_data, date,filename, path="../../source_model/ERA5_weather/"):
+    os.makedirs(os.path.join(path, "single"), exist_ok=True)
+    os.makedirs(os.path.join(path, "levels"), exist_ok=True)
     dataset = "reanalysis-era5-single-levels"
     request = {
         "product_type": ["reanalysis"],
@@ -27,7 +30,7 @@ def get_enviroment_from_date(environment_data, date,filename, path="../../source
          "day": ["10"],
          "time": ["00:00"],
 
-        "data_format": "grib",
+        "data_format": "netcdf4",
         "download_format": "unarchived",
         "area": [54.37, 18.38, 54.12, 18.63]
         # "year": [str(date.year)],
@@ -36,8 +39,8 @@ def get_enviroment_from_date(environment_data, date,filename, path="../../source
         # "time": [date.isoformat(timespec='minutes')],
         }
     client = cdsapi.Client()
-    client.retrieve(dataset, request).download(path+filename)
-    sl = xr.open_dataset(path+"single_"+filename)
+    client.retrieve(dataset, request, path+"single/single_"+filename)
+    sl = xr.open_dataset(path+"single/single_"+filename)
     
     dataset = "reanalysis-era5-pressure-levels"
     request = {
@@ -48,10 +51,10 @@ def get_enviroment_from_date(environment_data, date,filename, path="../../source
             "u_component_of_wind",
             "v_component_of_wind"
         ],
-        "year": [str(date.date.year)],
-        "month": [str(date.date.month)],
-        "day": [str(date.date.day)],
-        "time": [date.time.isoformat(timespec='minutes')],
+         "year": ["2000"],
+         "month": ["10"],
+         "day": ["10"],
+         "time": ["00:00"],
         "pressure_level": [
             "1", "2", "3",
             "5", "7", "10",
@@ -67,14 +70,14 @@ def get_enviroment_from_date(environment_data, date,filename, path="../../source
             "925", "950", "975",
             "1000"
         ],
-        "data_format": "grib",
+        "data_format": "netcdf4",
         "download_format": "unarchived",
         "area": [54.37, 18.38, 54.12, 18.63]
     }
 
     client = cdsapi.Client()
-    client.retrieve(dataset, request).download(path+filename)
-    pl = xr.open_dataset(path+"levels_"+filename)
+    client.retrieve(dataset, request, path+"levels/levels_"+filename)
+    pl = xr.open_dataset(path+"levels/levels_"+filename)
     
     g = 9.80665
     geo = pl["z"].data[0].flatten() # geopotential
