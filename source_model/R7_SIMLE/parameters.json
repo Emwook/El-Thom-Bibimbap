@@ -1,5 +1,27 @@
 {
     "elliptical_fins": {},
+    "tank": {
+        "liquid": {
+            "name": "nitrous oxide",
+            "density": 790
+        },
+        "oxidizer": {
+            "name": "nitrous oxide",
+            "density": 180
+        },
+        "geometry": {
+            "radius": 0.087,
+            "height": 0.700
+        },
+        "name": "oxidizer_tank_r7",
+        "flux_time": 4.9,
+        "initial_liquid_mass": 9.87,
+        "initial_gas_mass": 0.13,
+        "liquid_mass_flow_rate_in": 0,
+        "liquid_mass_flow_rate_out": 2,
+        "gas_mass_flow_rate_in": 0,
+        "gas_mass_flow_rate_out": 0
+    },
     "environment": {
         "base_pressure": null,
         "base_temperature": null,
