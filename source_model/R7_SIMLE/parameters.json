@@ -1,5 +1,27 @@
 {
     "elliptical_fins": {},
+     "tank": {
+        "liquid": {
+            "name": "nitrous oxide",
+            "density": 790
+        },
+        "oxidizer": {
+            "name": "nitrous oxide",
+            "density": 180
+        },
+        "geometry": {
+            "radius": 0.087,
+            "height": 0.700
+        },
+        "name": "oxidizer_tank_r7",
+        "flux_time": 4.9,
+        "initial_liquid_mass": 9.87,
+        "initial_gas_mass": 0.13,
+        "liquid_mass_flow_rate_in": 0,
+        "liquid_mass_flow_rate_out": 2,
+        "gas_mass_flow_rate_in": 0,
+        "gas_mass_flow_rate_out": 0
+    },
     "environment": {
         "base_pressure": null,
         "base_temperature": null,
@@ -43,7 +65,7 @@
         "position": null,
         "throat_radius": 0.0185,
         "burn_time": 9.0,
-        "thrust_source": "C:/Users/alicj/Desktop/SimBa_Simulations/Simulations/SimLE_SimBa_R7_Rocket.eng"
+        "thrust_source": null 
     },
     "nosecones": {
         "base_radius": null,
@@ -72,18 +94,23 @@
             "noise":[ 0,0,0]
         }
     },
-    "rail_buttons": {},
+    "rail_buttons": {
+        "upper_button_position": 1.91455,
+        "lower_button_position": 0.94021,
+        "angular_position": 10
+    },
     "rocket": {
-        "center_of_mass_without_propellant": 0.571,
-        "coordinate_system_orientation": "nose_to_tail",
-        "drag_curve": "APEX_OUTPUT/drag_curve.csv",
+        "center_of_mass_without_motor": 1.94828,
+        "coordinate_system_orientation": "tail_to_nose",
+        "power_off_drag":null,
+        "power_on_drag": null,
         "inertia": [
-            0.003,
-            0.003,
-            0.388
+            0.000,
+            0.000,
+            0.000
         ],
-        "mass": 4.07,
-        "radius": 0.035
+        "mass": 25.0,
+        "radius": 0.087
     },
     "stored_results": {
         "burnout_stability_margin": 4.635,
