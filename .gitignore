@@ -111,3 +111,6 @@ venv.bak/
 
 # PyCharm
 .idea
+
+#weather api logs
+source_model/ERA5_weather/
