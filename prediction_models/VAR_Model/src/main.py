@@ -74,7 +74,8 @@ def is_cointegrated(data, col_idx = 1, det_order = -1, max_lag = 20):
 
     # Comparing test statistics with critical values
     # If trace statistic is greater than the critical value there is evidence of cointegration
-    return sum(t > c for t, c in zip(trace, crit)) > 0, lag_values
+    r = sum(t > c for t, c in zip(trace, crit))
+    return r > 0, lag_values, r
 
 def choose_model(data, final_diff_order):
     # if the data is already stationary we use VAR
@@ -83,17 +84,17 @@ def choose_model(data, final_diff_order):
         # VAR will not work properly on cointegrated data, therefore
         # we need to do a cointegration test and use a different model
         # if the data is cointegrated
-        is_c, lag_values = is_cointegrated(data)
+        is_c, lag_values, r = is_cointegrated(data)
         if is_c:
             print("The series is cointegrated. The VECM model will be used.")
-            return "VECM", None
+            return "VECM", lag_values, r
         else:
             print("The series is not cointegrated. The VAR model will be used.")
             print(f"The series was differenced {final_diff_order} times.")
-            return "VAR", lag_values
+            return "VAR", lag_values, r
     else:
         print("The series was already stationary. The VAR model will be used.")
-        return "VAR", None
+        return "VAR", None, None
 
 def prepare_data(data, model, final_diff_order, frac):
     # preprocessing the data - if it isn't stationary, but it also isn't cointegrated
@@ -107,12 +108,14 @@ def prepare_data(data, model, final_diff_order, frac):
         for _ in range(final_diff_order):
             new_data = new_data.diff()
 
-        training_data = new_data.sample(frac=frac, random_state=0)
-        test_data = new_data.drop(training_data.index)
+        split = int(len(new_data) * frac)
+        training_data = new_data.iloc[:split]
+        test_data = new_data.iloc[split:]
         return training_data.dropna(), test_data.dropna()
     else:
-        training_data = new_data.sample(frac=frac, random_state=0)
-        test_data = new_data.drop(training_data.index)
+        split = int(len(new_data) * frac)
+        training_data = new_data.iloc[:split]
+        test_data = new_data.iloc[split:]
         return training_data, test_data
 
 if __name__ == '__main__':
@@ -136,7 +139,7 @@ if __name__ == '__main__':
     print("choosing model")
 
     # choosing the right model for the dataset (VAR or VECM)
-    model_type, lag_values = choose_model(training_sensors, final_diff_order)
+    model_type, lag_values, r = choose_model(training_sensors, final_diff_order)
 
     print("preparing data")
 
@@ -154,11 +157,10 @@ if __name__ == '__main__':
         result = model.fit()
         print(test_var(model, test_data))
     else:
-        model = create_vecm(training_data)
+        lag_order = lag_values.selected_orders["aic"]
+
+        model = create_vecm(training_data, lag_order, r)
 
         result = model.fit()
 
-        # todo to summary chyba jest wazne
-        #summary = result.summary()
-
-        print(test_vecm(result, test_data, n=100))
+        print(test_vecm(result, test_data, n=1000))
