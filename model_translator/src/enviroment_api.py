@@ -42,7 +42,7 @@ def get_enviroment_from_date(environment_data, date,filename, path="../../source
         "year": [str(date.year)],
         "month": [str(date.month)],
         "day": [str(date.day)],
-        "time": [date.strftime("%h:%m")],
+        "time": [date.strftime("%H:%M")],
         "data_format": "netcdf4",
         "download_format": "unarchived",
         "area": [54.37, 18.38, 54.12, 18.63]
@@ -64,7 +64,7 @@ def get_enviroment_from_date(environment_data, date,filename, path="../../source
         "year": [str(date.year)],
         "month": [str(date.month)],
         "day": [str(date.day)],
-        "time": [date.strftime("%h:%m")],
+        "time": [date.strftime("%H:%M")],
         "pressure_level": [
             "1", "2", "3",
             "5", "7", "10",
