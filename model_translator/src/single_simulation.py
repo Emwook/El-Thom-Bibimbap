@@ -1,7 +1,8 @@
 import datetime
+import json
 import numpy as np
 import pandas as pd
-from rocketpy import Flight , Accelerometer, Gyroscope, Environment, StochasticEnvironment
+from rocketpy import Flight , Accelerometer, Gyroscope, Environment, StochasticEnvironment, GnssReceiver
 
 import os
 import xarray as xr
@@ -73,7 +74,7 @@ def apply_sensor_dropout(current_flight, frame, rng):
 
     return frame
 
-def run_single_simulation(i, rocket, environment, heading , rail_length):
+def run_single_simulation(i, rocket, environment, heading , rail_length, rng):
     current_flight = Flight(
             heading=heading,
             environment=environment,
@@ -132,7 +133,7 @@ def run_single_simulation(i, rocket, environment, heading , rail_length):
         combined_df = pd.concat([all_accels_df, all_gnsss_df], axis=1).reindex(master_index)
         combined_df = combined_df.ffill().bfill()
 
-        times_array = combined_df.index.values
+        times_array = all_accels_df.index.values
 
         # todo to jest koszmarnie wolne
         # todo wydaje mi sie ze to moze byc szybsze:

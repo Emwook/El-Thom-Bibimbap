@@ -13,7 +13,7 @@ from rocketpy.stochastic import StochasticEnvironment, StochasticSolidMotor
 
 from logger import *
 from single_simulation import run_single_simulation
-
+import cProfile
 
 # @BRIEF
 # Initializes rocket with data found in give JSON file
@@ -240,25 +240,35 @@ def init_paths_from_json(main_paths_file):
 def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,acc_list,thrust_path,stochastic_motor_params):
     indices = range(N) 
     def worker(i):
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         np.random.seed(i)
         
-        
+        with open(json_path, 'r', encoding='utf-8') as file:
+            model_data = json.load(file)
            
-        base_motor = init_base_motor_from_JSON(json_path, thrust_path)
+        base_motor = init_base_motor_from_JSON(model_data, thrust_path)
         stochastic_motor = init_stochastic_motor(base_motor,stochastic_motor_params)
         sampled_motor = stochastic_motor.create_object()
         stochastic_motor._set_stochastic(seed = i)
 
-        rocket = init_rocket_from_JSON(json_path,drag_path,base_motor)
+        rocket = init_rocket_from_JSON(model_data,drag_path,sampled_motor)
         rocket = add_acc_to_rocket(rocket, acc_list)
 
         st_environment = StochasticEnvironment(environment=env_base)
         environment = st_environment.create_object()
-        return run_single_simulation(i, rocket, environment, heading, rail_length)
-    
+        rng = np.random.default_rng(i)
 
+        result =  run_single_simulation(i, rocket, environment, heading, rail_length,rng)
+
+        profiler.disable()
+        profiler.dump_stats(f"output/worker_{i}_profile.prof") 
+        
+        return result
+    
     with ProcessPool() as pool:
-        results = list(tqdm.tqdm(pool.uimap(worker, indices), total = number_of_simulations, desc = "Siupi dupi Grzesiu dawaj"))
+        results = list(tqdm.tqdm(pool.uimap(worker, indices), total = N, desc = "Siupi dupi Grzesiu dawaj"))
     return results
 
 
