@@ -241,6 +241,9 @@ def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,
     indices = range(N) 
     with open(json_path, 'r', encoding='utf-8') as file:
         model_data = json.load(file)
+
+    for el in acc_list:
+        el.sampling_rate/=20
     base_motor = init_base_motor_from_JSON(model_data, thrust_path)
     stochastic_motor = init_stochastic_motor(base_motor,stochastic_motor_params)
     def worker(i):
@@ -292,6 +295,8 @@ def main():
     acc_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM9DS1_gyro_2000dps"))
 
     acc_list.append(init_gnss_from_JSON(paths["sensors_path"]["gnss_velocity_heading"], "u-blox_MAX-M10S"))
+    
+
 
     heading, rail_length = init_flight_config_from_JSON(paths["config_path"])
     

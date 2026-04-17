@@ -81,7 +81,7 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng):
             rocket=rocket,
             rail_length=rail_length
             )
-    
+    dir = os.path.dirname(__file__)
     accel_data = []
     gnss_data = []
     acceleration_thresholds = [0, 0, 0]         #m/s^2
