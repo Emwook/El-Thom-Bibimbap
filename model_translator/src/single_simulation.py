@@ -82,12 +82,6 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng):
             rail_length=rail_length
             )
     
-    dir = os.path.dirname(__file__)
-    file_name = os.path.join(dir, f"output/flight_{i}.out")
-    with open(file_name, 'w+') as file:
-            for sample in current_flight.solution:
-                file.write(rp_solution_arr_str(sample) + '\n')
-
     accel_data = []
     gnss_data = []
     acceleration_thresholds = [0, 0, 0]         #m/s^2
@@ -139,14 +133,14 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng):
         # todo wydaje mi sie ze to moze byc szybsze:
         #  current_flight.ax(times)
         #  Pawel
-        real_acc_x = np.array([current_flight.ax(t) for t in times_array])
-        real_acc_y = np.array([current_flight.ay(t) for t in times_array])
-        real_acc_z = np.array([current_flight.az(t) for t in times_array])
+        # TU WIKTOR, wydaje mi się że teraz powinno być faster ale nie wiem  :) 
+        real_acc_x = np.array(current_flight.ax(times_array))
+        real_acc_y = np.array(current_flight.ay(times_array))
+        real_acc_z = np.array(current_flight.az(times_array))
 
-        real_angvel_x = np.array([current_flight.w1(t) for t in times_array])
-        real_angvel_y = np.array([current_flight.w2(t) for t in times_array])
-        real_angvel_z = np.array([current_flight.w3(t) for t in times_array])
-
+        real_angvel_x = np.array(current_flight.w1(times_array))
+        real_angvel_y = np.array(current_flight.w2(times_array))
+        real_angvel_z = np.array(current_flight.w3(times_array))
         acceleration_thresholds = [19.613, 39.227, 78.453] #m/s^2
         angular_velocity_thresholds = [245, 500]           #dps
 

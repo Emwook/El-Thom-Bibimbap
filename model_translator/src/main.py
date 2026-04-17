@@ -239,17 +239,16 @@ def init_paths_from_json(main_paths_file):
     
 def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,acc_list,thrust_path,stochastic_motor_params):
     indices = range(N) 
+    with open(json_path, 'r', encoding='utf-8') as file:
+        model_data = json.load(file)
+    base_motor = init_base_motor_from_JSON(model_data, thrust_path)
+    stochastic_motor = init_stochastic_motor(base_motor,stochastic_motor_params)
     def worker(i):
         profiler = cProfile.Profile()
         profiler.enable()
 
         np.random.seed(i)
-        
-        with open(json_path, 'r', encoding='utf-8') as file:
-            model_data = json.load(file)
            
-        base_motor = init_base_motor_from_JSON(model_data, thrust_path)
-        stochastic_motor = init_stochastic_motor(base_motor,stochastic_motor_params)
         sampled_motor = stochastic_motor.create_object()
         stochastic_motor._set_stochastic(seed = i)
 
