@@ -1,9 +1,9 @@
 {
   "DS18B20_thermometer": {
     "sampling_rate": 520.83,
-    "measurement_range": [218.15,398.15],
+    "measurement_range": [398.15,218.15],
     "resolution": 0.0173,
-    "noise_density": 0.0,
+    "noise_density": 0.1,
     "noise_variance": 0.000025,
     "random_walk_density": 0.0,
     "random_walk_variance": 0.0,

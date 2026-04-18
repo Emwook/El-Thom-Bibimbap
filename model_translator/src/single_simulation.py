@@ -1,16 +1,12 @@
-import datetime
-import json
 import numpy as np
 import pandas as pd
-from rocketpy import Flight , Accelerometer, Gyroscope
+from rocketpy import Flight , Accelerometer, Gyroscope, Barometer
+from rocketpy.sensors import ScalarSensor
 
 import os
-import xarray as xr
 from enviroment_api import * 
-from scipy.interpolate import interp1d
 
 from logger import *
-
 
 # @BRIEF
 # cretes string based on rp.solution_array, without np.float type signature
@@ -86,12 +82,19 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng, ac
 
     for sensor_tuple in rocket.sensors:
         sensor = sensor_tuple.component
-        cols = ["Time", f"{sensor.name}_X", f"{sensor.name}_Y", f"{sensor.name}_Z"]
+        if len(sensor.measured_data) > 0:
+            if len(sensor.measured_data[0]) == 4:
+                cols = ["Time", f"{sensor.name}_X", f"{sensor.name}_Y", f"{sensor.name}_Z"]
+            else:
+                cols = ["Time", f"{sensor.name}_Value"]
+        else:
+            cols = []
+
         frame = pd.DataFrame(sensor.measured_data, columns=cols)
         frame.set_index("Time", inplace=True)
 
         apply_sensor_dropout(current_flight, frame, rng)
-        if isinstance(sensor , (Accelerometer, Gyroscope)):
+        if isinstance(sensor , (Accelerometer, Gyroscope, ScalarSensor, Barometer)):
             accel_data.append({
                     "df": frame,
                     "name": sensor.name
@@ -116,11 +119,16 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng, ac
         all_accels_df["Best_AngVel_X"] = get_best_angular_velocity(real_angvel_x, "X", all_accels_df, angular_velocity_thresholds)
         all_accels_df["Best_AngVel_Y"] = get_best_angular_velocity(real_angvel_y, "Y", all_accels_df, angular_velocity_thresholds)
         all_accels_df["Best_AngVel_Z"] = get_best_angular_velocity(real_angvel_z, "Z", all_accels_df, angular_velocity_thresholds)
+
+        scalar_cols = [c for c in all_accels_df.columns if c.endswith("_Value")]
       
         final_cols = ["Best_Acc_X", "Best_Acc_Y", "Best_Acc_Z", 
-                      "Best_AngVel_X", "Best_AngVel_Y", "Best_AngVel_Z"]
-        final_df = all_accels_df[final_cols]
-        # final_df.to_csv(os.path.join(dir, f"output/flight_{i}_test_sensors.csv"), index_label="Time")
+                      "Best_AngVel_X", "Best_AngVel_Y", "Best_AngVel_Z"] + scalar_cols
+        
+        final_df = all_accels_df[final_cols].copy()
+        final_df[scalar_cols] = final_df[scalar_cols].ffill()
+        final_df[scalar_cols] = final_df[scalar_cols].bfill()
+        final_df.to_csv(os.path.join(dir, f"output/flight_{i}_test_sensors.csv"), index_label="Time")
         final_df['flight_id'] = i 
         Log.print_info(f"Pakowanko... {i}")
         final_df.to_parquet(f"output/flight_{i}.parquet", index=True)

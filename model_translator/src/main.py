@@ -2,13 +2,12 @@ import datetime
 import json
 import sys
 from enviroment_api import * 
-
+from custom_sensors.thermometer import *
 import numpy as np
 import tqdm
-import enviroment_api
 from logger import *
 from pathos.multiprocessing import ProcessPool
-from rocketpy import Environment, SolidMotor, Rocket, Accelerometer, Gyroscope
+from rocketpy import Environment, SolidMotor, Rocket, Accelerometer, Gyroscope, Barometer
 from rocketpy.stochastic import StochasticEnvironment, StochasticSolidMotor
 
 from logger import *
@@ -198,20 +197,43 @@ def init_gyroscope_from_JSON(path_to_file, name):
     )
     return gyroscope
 
-def add_gyro_to_rocket(rocket , gyro_list):
-    gyro_list.sort(key = lambda x: x.measurement_range)
-    for g in gyro_list:
-        #TODO: replace 1 
-        rocket.add_sensor(g , 1) #todo change when eagle lands
-    return rocket
+def init_thermometer_from_JSON(path_to_file, name):
+    with open(path_to_file, 'r', encoding = 'utf-8')as file:
+        data = json.load(file)
+    thermometer_data = data[name]
+    thermometer = Thermometer(
+        sampling_rate=thermometer_data["sampling_rate"],
+        measurement_range=thermometer_data["measurement_range"],
+        resolution=thermometer_data["resolution"],
+        noise_density=thermometer_data["noise_density"],
+        noise_variance=thermometer_data["noise_variance"],
+        operating_temperature=thermometer_data["operating_temperature"],
+        constant_bias=thermometer_data["constant_bias"],
+    )
+    return thermometer
 
-def add_acc_to_rocket(rocket , acc_list):
-    acc_list.sort(key = lambda x: x.measurement_range)
+
+def init_barometer_from_JSON(path_to_file, name):
+    with open(path_to_file, 'r', encoding = 'utf-8')as file:
+        data = json.load(file)
+    barometer_data = data[name]
+    barometer = Barometer(
+        sampling_rate=barometer_data["sampling_rate"],
+        measurement_range=barometer_data["measurement_range"],
+        resolution=barometer_data["resolution"],
+        noise_variance=barometer_data["noise_variance"],
+        constant_bias=barometer_data["constant_bias"],
+        operating_temperature=barometer_data["operating_temperature"],
+    )
+    return barometer
+
+def add_sensors_to_rocket(rocket , acc_list):
+    # acc_list.sort(key = lambda x: x.measurement_range)
     for a in acc_list:
-        #TODO: replace 1 
+        #TODO: replace 1 ?
         if TEST_FLAG:
             a.sampling_rate /= 100
-        rocket.add_sensor(a , 1) #todo change when eagle lands
+        rocket.add_sensor(a , 1)
     return rocket
 
 def init_stochastic_motor_params(path_to_file):
@@ -234,7 +256,7 @@ def init_paths_from_json(main_paths_file):
         dataset = json.load(file)
     return dataset
     
-def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,acc_list,thrust_path,stochastic_motor_params, acceleration_thresholds, angular_velocity_thresholds):
+def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,sensor_list,thrust_path,stochastic_motor_params, acceleration_thresholds, angular_velocity_thresholds):
     indices = range(N) 
     with open(json_path, 'r', encoding='utf-8') as file:
         model_data = json.load(file)
@@ -251,7 +273,7 @@ def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,
         stochastic_motor._set_stochastic(seed = i)
 
         rocket = init_rocket_from_JSON(model_data,drag_path,sampled_motor)
-        rocket = add_acc_to_rocket(rocket, acc_list)
+        rocket = add_sensors_to_rocket(rocket, sensor_list)
 
         st_environment = StochasticEnvironment(environment=env_base)
         environment = st_environment.create_object()
@@ -279,17 +301,18 @@ def main():
     
     paths = init_paths_from_json("paths.json")
     environment_data = get_environment_data_from_JSON(paths["config_path"])
-    acc_list = [] 
-    acc_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_2g"))
-    acc_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_4g"))
-    acc_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_8g"))
-    acc_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_16g"))
-
-    acc_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_125dps"))
-    acc_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_250dps"))
-    acc_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_500dps"))
-    acc_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_1000dps"))
-    acc_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_2000dps"))
+    sensor_list = [] 
+    sensor_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_2g"))
+    sensor_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_4g"))
+    sensor_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_8g"))
+    sensor_list.append(init_accelerometer_from_JSON(paths["sensors_path"]["accelerometer"],"LSM6DSOX_acc_16g"))
+    sensor_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_125dps"))
+    sensor_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_250dps"))
+    sensor_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_500dps"))
+    sensor_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_1000dps"))
+    sensor_list.append(init_gyroscope_from_JSON(paths["sensors_path"]["gyroscope"],"LSM6DSOX_gyro_2000dps"))
+    sensor_list.append(init_barometer_from_JSON(paths["sensors_path"]["barometer"],"BME280_barometer"))
+    sensor_list.append(init_thermometer_from_JSON(paths["sensors_path"]["thermometer"],"DS18B20_thermometer"))
 
     heading, rail_length = init_flight_config_from_JSON(paths["config_path"])
     
@@ -309,7 +332,7 @@ def main():
                        paths["source_model_path"]["drag_curve"],
                        env_base,heading,
                        rail_length,
-                       acc_list,
+                       sensor_list,
                        paths["source_model_path"]["thrust_source"],
                        stochastic_motor_params,
                        acceleration_thresholds,
