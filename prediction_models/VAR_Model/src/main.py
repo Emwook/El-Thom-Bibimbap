@@ -1,3 +1,6 @@
+import json
+import pickle
+
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.api import VAR
@@ -6,7 +9,7 @@ from statsmodels.tsa.stattools import adfuller
 
 from var import *
 from vecm import *
- 
+
 def read_sensor_data(directory, index='Time'):
     sensors = pd.read_csv(directory)
     sensors.set_index(index, inplace=True)
@@ -124,14 +127,17 @@ def prepare_data(data, model, final_diff_order, frac):
 # iterates through all specified parameters and chooses the best model
 # super expensive in resources
 # todo check results on fast computer
-def find_best_parameters_for_VECM(data, max_r, max_lag):
+def find_best_parameters_for_VECM(data, max_r, max_lag, current_result):
     best_aic = np.inf
     best_r = 1
     best_lag = 1
-    best_result = None
+    best_result = current_result
 
     for r in range(1, max_r + 1):
         for lag in range(1, max_lag + 1):
+
+            print(f"Testing r: {r}, lag: {lag}")
+
             try:
                 model = VECM(data, k_ar_diff=lag, coint_rank=r)
                 result = model.fit()
@@ -146,6 +152,16 @@ def find_best_parameters_for_VECM(data, max_r, max_lag):
                 continue
 
     return best_r, best_lag, best_result
+
+def test_saved_model():
+    training_sensors = read_sensor_data('../../../model_translator/src/output/flight_0_best_sensors.csv')[:50847]
+    final_diff_order = check_final_diff_order(training_sensors)
+    model_type, lag_values, r = choose_model(training_sensors, final_diff_order)
+    training_data, test_data = prepare_data(training_sensors, model_type, final_diff_order, 0.9)
+    with open("model.pkl", "rb") as f:
+        result = pickle.load(f)
+
+    test_vecm(result, test_data, n=500)
 
 if __name__ == '__main__':
     # Reading the data from csv files
@@ -186,12 +202,26 @@ if __name__ == '__main__':
         result = model.fit()
         print(test_var(model, test_data))
     else:
-        #lag_order = lag_values.selected_orders["aic"]
+        lag_order = lag_values.selected_orders["aic"]
+        model = create_vecm(training_data, lag_order, r)
 
-        r, lag, result = find_best_parameters_for_VECM(data=training_data, max_r=6, max_lag=10)
+        result = model.fit()
 
-        #model = create_vecm(training_data, lag_order, r)
+        r, lag, result = find_best_parameters_for_VECM(data=training_data, max_r=6, max_lag=6, current_result=result)
 
-        #result = model.fit()
 
-        print(test_vecm(result, test_data, n=500))
+
+        with open("model.pkl", "wb") as f:
+            pickle.dump(result, f)
+
+        meta = {
+            "diff_order": final_diff_order,
+            "lag": lag,
+            "rank": r,
+            "columns": list(training_data.columns)
+        }
+
+        with open("meta.json", "w") as f:
+            json.dump(meta, f)
+
+    test_vecm(result, test_data, n=500)

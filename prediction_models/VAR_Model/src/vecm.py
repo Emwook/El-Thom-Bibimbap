@@ -1,7 +1,8 @@
+import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from statsmodels.tsa.vector_ar.vecm import VECM
-import numpy as np
-from scipy.stats import chi2_contingency
+
 
 def create_vecm(data, lag, r):
     model = VECM(data, k_ar_diff=lag, coint_rank=r)
@@ -12,6 +13,8 @@ def test_vecm(fitted_model, test_data, n):
     test = np.array(test_data[:n])
 
     types = test_data.columns
+
+    results = []
 
     for i in range(len(types)):
         prediction_i = prediction[:, i]
@@ -34,6 +37,11 @@ def test_vecm(fitted_model, test_data, n):
         print(f"MAE: {mae:.4f}")
         print(f"MSE: {mse:.4f}")
 
+        results.append({
+            "column": types[i],
+            "MAE": mae,
+            "MSE": mse
+        })
 
         x = np.arange(1, prediction_i.size + 1)
         plt.plot(x, prediction_i, label="Prediction")
@@ -41,3 +49,8 @@ def test_vecm(fitted_model, test_data, n):
         plt.title(types[i])
         plt.legend()
         plt.show()
+        plt.savefig(f"{types[i]}_plot.png")
+        plt.close()
+
+    df = pd.DataFrame(results)
+    df.to_csv("results.csv", index=False)
