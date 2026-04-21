@@ -255,6 +255,7 @@ def init_paths_from_json(main_paths_file):
     with open(main_paths_file, 'r', encoding = 'utf-8')as file:
         dataset = json.load(file)
     return dataset
+
     
 def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,sensor_list,thrust_path,stochastic_motor_params, acceleration_thresholds, angular_velocity_thresholds):
     indices = range(N) 
@@ -282,7 +283,7 @@ def parallel_generator(N, json_path, drag_path, env_base, heading , rail_length,
         result =  run_single_simulation(i, rocket, environment, heading, rail_length, rng, acceleration_thresholds, angular_velocity_thresholds)
 
         profiler.disable()
-        profiler.dump_stats(f"output/worker_{i}_profile.prof") 
+        profiler.dump_stats(f"output/worker_b{i}_profile.prof") 
         
         return result
     

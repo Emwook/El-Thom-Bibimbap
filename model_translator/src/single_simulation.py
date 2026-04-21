@@ -70,6 +70,10 @@ def apply_sensor_dropout(current_flight, frame, rng):
 
     return frame
 
+
+def fast_extract(rp_func, times):
+    return np.interp(times, rp_func.x_array, rp_func.y_array)
+
 def run_single_simulation(i, rocket, environment, heading , rail_length, rng, acceleration_thresholds, angular_velocity_thresholds):
     current_flight = Flight(
             heading=heading,
@@ -104,13 +108,13 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng, ac
         all_accels_df = pd.concat([item["df"] for item in accel_data], axis=1)
         times_array = all_accels_df.index.values
 
-        real_acc_x = np.array([current_flight.ax(t) for t in times_array])
-        real_acc_y = np.array([current_flight.ay(t) for t in times_array])
-        real_acc_z = np.array([current_flight.az(t) for t in times_array])
+        real_acc_x = fast_extract(current_flight.ax, times_array)
+        real_acc_y = fast_extract(current_flight.ay, times_array)
+        real_acc_z = fast_extract(current_flight.az, times_array)
 
-        real_angvel_x = np.array([current_flight.w1(t) for t in times_array])
-        real_angvel_y = np.array([current_flight.w2(t) for t in times_array])
-        real_angvel_z = np.array([current_flight.w3(t) for t in times_array])
+        real_angvel_x = fast_extract(current_flight.w1, times_array)
+        real_angvel_y = fast_extract(current_flight.w2, times_array)
+        real_angvel_z = fast_extract(current_flight.w3, times_array)
 
         all_accels_df["Best_Acc_X"] = get_best_acceleration(real_acc_x, "X", all_accels_df, acceleration_thresholds)
         all_accels_df["Best_Acc_Y"] = get_best_acceleration(real_acc_y, "Y", all_accels_df, acceleration_thresholds)
@@ -128,7 +132,7 @@ def run_single_simulation(i, rocket, environment, heading , rail_length, rng, ac
         final_df = all_accels_df[final_cols].copy()
         final_df[scalar_cols] = final_df[scalar_cols].ffill()
         final_df[scalar_cols] = final_df[scalar_cols].bfill()
-        final_df.to_csv(os.path.join(dir, f"output/flight_{i}_test_sensors.csv"), index_label="Time")
+        # final_df.to_csv(os.path.join(dir, f"output/flight_{i}_test_sensors.csv"), index_label="Time")
         final_df['flight_id'] = i 
         Log.print_info(f"Pakowanko... {i}")
         final_df.to_parquet(f"output/flight_{i}.parquet", index=True)
